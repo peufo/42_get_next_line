@@ -7,9 +7,11 @@
       "args": [
         "-fcolor-diagnostics",
         "-fansi-escape-codes",
+        "-fsanitize=address",
         "-g",
         "${file}",
         "get_next_line.c",
+        "get_next_line_utils.c",
         "-o",
         "${fileDirname}/${fileBasenameNoExtension}"
       ],

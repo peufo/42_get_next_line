@@ -2,6 +2,12 @@
 #include <fcntl.h>
 #include <stdio.h>
 
+void put_str(char *str)
+{	
+	while (*str)
+		write(1, str++, 1);
+}
+
 int main(void)
 {
 
@@ -12,9 +18,8 @@ int main(void)
 
 	while ((values[index] = get_next_line((fd))))
 	{
-		printf("%d -> \"%s\"\n", index, values[index]);
-		index++;
+		put_str(values[index]);
 	}
-	printf("%d -> \"%s\"\n", index, values[index]);
-
+	put_str("(end)\n");
+	close(fd);
 }

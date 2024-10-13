@@ -6,147 +6,81 @@
 /*   By: jvoisard <jonas.voisard@gmail.com>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/12 19:32:03 by jvoisard          #+#    #+#             */
-/*   Updated: 2024/10/13 20:25:57 by jvoisard         ###   ########.fr       */
+/*   Updated: 2024/10/13 23:18:14 by jvoisard         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-static short	readable_len(t_block *b)
+char	*read_file(int fd);
+typedef struct s_content
 {
-	return (b->len - (b->cursor - b->buffer));
-}
+	char	*str;
+	char	*cursor;
+	int		fd;
+}	t_content;
 
-static ssize_t	index_of(t_block *b, char c)
+static void *free_content(t_content **content)
 {
-	ssize_t	i;
-	ssize_t	len;
-
-	i = 0;
-	len = readable_len(b);
-	while (len-- && b->cursor[i] != c)
-		i++;
-	if (len >= 0 && b->cursor[i] == c)
-		return (i);
-	return (-1);
-}
-
-static t_block	*free_block(t_block *b, short free_next)
-{
-	if (b->buffer)
-		free(b->buffer);
-	if (free_next && b->next)
-		free_block(b->next, 1);
-	free(b);
-	return (NULL);
-}
-
-static t_block	*new_block(void)
-{
-	t_block	*new;
-
-	new = malloc(sizeof(*new));
-	if (!new)
+	if (!*content)
 		return (0);
-	new->next = NULL;
-	new->buffer = malloc(BUFFER_SIZE);
-	new->cursor = new->buffer;
-	if (!new->buffer)
-		return (free_block(new, 0));
-	return (new);
+	if ((*content)->str)
+		free((*content)->str);
+	free(*content);
+	*content = NULL;
+	return (0);
 }
 
-
-static t_block	*read_next_block(int fd)
+static t_content	*new_content(int fd)
 {
-	t_block	*b;
+	t_content	*content;
 
-	b = new_block();
-	if (!b)
+	content = malloc(sizeof(*content));
+	if (!content)
 		return (0);
-	b->len = read(fd, b->buffer, BUFFER_SIZE);
-	if (b->len == -1)
-		return (free_block(b, 0));
-	if (b->len)
+	content->fd = fd;
+	content->str = read_file(fd);
+	content->cursor = content->str;
+	if (!content->str)
+		return (free_content(&content));
+	return (content);
+}
+
+static size_t	get_next_line_len(t_content *content)
+{
+	size_t	len;
+
+	len = 0;
+	while (content->cursor[len])
 	{
-		b->next = read_next_block(fd);
-		if (!b->next)
-			return (free_block(b, 0));
+		if (content->cursor[len] == '\n')
+			return (len + 1);
+		len++;
 	}
-	return (b);
-}
-
-static ssize_t	get_line_len(t_block *b)
-{
-	ssize_t	nl_index;
-	ssize_t	len;
-
-	len = readable_len(b);
-	if (!len)
-		return (0);
-	nl_index = index_of(b, '\n');
-	if (nl_index != -1)
-		return (nl_index + 1);
-	if (b->next)
-		return (len + get_line_len(b->next));
 	return (len);
-}
-
-static t_block	*write_next_block(t_block *b, char *line)
-{
-	t_block	*next;
-	ssize_t	len;
-
-	len = readable_len(b);
-	while (len-- && *(b->cursor) != '\n')
-		(*line++) = *(b->cursor++);
-	if (*(b->cursor) == '\n')
-	{
-		*(line++) = '\n';
-		*line = '\0';
-		b->cursor++;
-		return (b);
-	}
-	*line = '\0';
-	next = b->next;
-	free_block(b, 0);
-	if (!next)
-		return (0);
-	if (!next->len)
-		return (next);
-	return (write_next_block(next, line));
+	
 }
 
 char	*get_next_line(int fd)
 {
-	ssize_t			line_len;
-	char			*line;
-	static t_block	*block;
+	static t_content	*content;
+	size_t				line_len;
+	char				*line;
+	char				*_line;
 
-	if (!block)
-		block = read_next_block(fd);
-	if (!block)
+	if (!content)
+		content = new_content(fd);
+	if (!content)
 		return (0);
-	if (!block->len)
-	{
-		free_block(block, 1);
-		block = NULL;
-		return (0);
-	}
-	line_len = get_line_len(block);
+	line_len = get_next_line_len(content);
 	if (!line_len)
-	{
-		free_block(block, 1);
-		block = NULL;
-		return (0);
-	}
+		return (free_content(&content));
 	line = malloc(line_len + 1);
 	if (!line)
-	{
-		free_block(block, 1);
-		block = NULL;
-		return (0);
-	}
-	block = write_next_block(block, line);
+		return (free_content(&content));
+	_line = line;
+	while (line_len--)
+		*(_line++) = *(content->cursor++);
+	*_line = '\0';
 	return (line);
 }
