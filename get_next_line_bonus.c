@@ -1,16 +1,16 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   get_next_line.c                                    :+:      :+:    :+:   */
+/*   get_next_line_bonus.c                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: jvoisard <jonas.voisard@gmail.com>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/12 19:32:03 by jvoisard          #+#    #+#             */
-/*   Updated: 2024/10/16 22:36:45 by jvoisard         ###   ########.fr       */
+/*   Updated: 2024/10/16 22:36:31 by jvoisard         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "get_next_line.h"
+#include "get_next_line_bonus.h"
 
 static ssize_t	use_str_left(char *buffer, char *str_left)
 {
@@ -88,19 +88,30 @@ static char	*read_next(int fd, char *str_left, ssize_t line_len)
 
 char	*get_next_line(int fd)
 {
-	static char	str_left[BUFFER_SIZE];
+	static char	*strs_left[LIMIT_FD];
 	char		buffer[BUFFER_SIZE];
 	ssize_t		buffer_len;
 	char		*line;
 
-	if (fd < 0 || BUFFER_SIZE < 1)
+	if (fd < 0 || fd > LIMIT_FD || BUFFER_SIZE < 1)
 		return (0);
-	buffer_len = use_str_left(buffer, str_left);
+	if (!strs_left[fd])
+	{
+		strs_left[fd] = malloc(BUFFER_SIZE);
+		if (!strs_left[fd])
+			return (0);
+		strs_left[fd][0] = '\0';
+	}
+	buffer_len = use_str_left(buffer, strs_left[fd]);
 	if (buffer_len && buffer[buffer_len - 1] == '\n')
 		return (str_cut(buffer, buffer + buffer_len, 0));
-	line = read_next(fd, str_left, buffer_len);
+	line = read_next(fd, strs_left[fd], buffer_len);
 	if (!line)
+	{
+		free(strs_left[fd]);
+		strs_left[fd] = NULL;
 		return (0);
+	}
 	while (buffer_len--)
 		*(--line) = buffer[buffer_len];
 	return (line);

@@ -1,0 +1,6 @@
+{
+  "files.associations": {
+    "*.astro": "astro",
+    "get_next_line.h": "c"
+  }
+}
