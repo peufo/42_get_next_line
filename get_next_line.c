@@ -6,7 +6,7 @@
 /*   By: jvoisard <jonas.voisard@gmail.com>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/12 19:32:03 by jvoisard          #+#    #+#             */
-/*   Updated: 2024/10/16 15:59:28 by jvoisard         ###   ########.fr       */
+/*   Updated: 2024/10/16 16:03:57 by jvoisard         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,6 +34,7 @@ static char	*str_cut(char *buffer, char *cursor, size_t line_len)
 {
 	char	*cut;
 	size_t	cut_len;
+
 	if (!line_len && cursor == buffer)
 		return (0);
 	cut_len = cursor - buffer;
@@ -92,7 +93,6 @@ char	*get_next_line(int fd)
 
 	if (fd < 0 || BUFFER_SIZE < 1)
 		return (0);
-
 	cursor = use_str_left(buffer, str_left);
 	if (cursor > buffer && *(cursor - 1) == '\n')
 		return (str_cut(buffer, cursor, 0));
