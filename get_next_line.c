@@ -6,7 +6,7 @@
 /*   By: jvoisard <jonas.voisard@gmail.com>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/12 19:32:03 by jvoisard          #+#    #+#             */
-/*   Updated: 2024/10/16 15:07:30 by jvoisard         ###   ########.fr       */
+/*   Updated: 2024/10/16 15:59:28 by jvoisard         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,9 +61,7 @@ static char	*read_next(int fd, char *str_left, size_t line_len)
 	ssize_t	bytes_read;
 	ssize_t	buffer_len;
 
-	cursor = use_str_left(buffer, str_left);
-	if (cursor > buffer && *(cursor - 1) == '\n')
-		return (str_cut(buffer, cursor, line_len));
+	cursor = buffer;
 	bytes_read = read(fd, cursor, BUFFER_SIZE - (cursor - buffer));
 	if (bytes_read == -1)
 		return (0);
@@ -88,10 +86,21 @@ static char	*read_next(int fd, char *str_left, size_t line_len)
 char	*get_next_line(int fd)
 {
 	static char	str_left[BUFFER_SIZE];
-	char		*line;
+	char		buffer[BUFFER_SIZE];
+	char		*cursor;
+	ssize_t		buffer_len;
 
 	if (fd < 0 || BUFFER_SIZE < 1)
 		return (0);
-	line = read_next(fd, str_left, 0);
-	return (line);
+
+	cursor = use_str_left(buffer, str_left);
+	if (cursor > buffer && *(cursor - 1) == '\n')
+		return (str_cut(buffer, cursor, 0));
+	buffer_len = (cursor - buffer);
+	cursor = read_next(fd, str_left, cursor - buffer);
+	if (!cursor)
+		return (0);
+	while (buffer_len--)
+		*(--cursor) = buffer[buffer_len];
+	return (cursor);
 }
