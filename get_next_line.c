@@ -6,125 +6,92 @@
 /*   By: jvoisard <jonas.voisard@gmail.com>         +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/12 19:32:03 by jvoisard          #+#    #+#             */
-/*   Updated: 2024/10/15 22:34:26 by jvoisard         ###   ########.fr       */
+/*   Updated: 2024/10/16 15:07:30 by jvoisard         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-static char	*get_reader_nl(t_reader *reader)
+static char	*use_str_left(char *buffer, char *str_left)
 {
-	char	*cursor;
-	ssize_t	len;
+	char	*_str_left;
 
-	len = reader->len;
-	cursor = reader->cursor;
+	if (!*str_left)
+		return (buffer);
+	_str_left = str_left;
+	while (*str_left && *str_left != '\n')
+		(*buffer++) = (*str_left++);
+	if (*str_left == '\n')
+		(*buffer++) = (*str_left++);
+	*buffer = '\0';
+	while (*str_left)
+		*(_str_left++) = (*str_left++);
+	*(_str_left) = '\0';
+	return (buffer);
+}
+
+static char	*str_cut(char *buffer, char *cursor, size_t line_len)
+{
+	char	*cut;
+	size_t	cut_len;
+	if (!line_len && cursor == buffer)
+		return (0);
+	cut_len = cursor - buffer;
+	cut = malloc(cut_len + line_len + 1);
+	if (!cut)
+		return (0);
+	cut += cut_len + line_len;
+	*cut = '\0';
+	while (cut_len--)
+		*(--cut) = *(--cursor);
+	return (cut);
+}
+
+static void	save_str_left(char *str_left, char *cursor, size_t len)
+{
 	while (len--)
-	{
-		if (*cursor == '\n')
-			return (cursor);
+		*(str_left++) = *(cursor++);
+	*str_left = '\0';
+}
+
+static char	*read_next(int fd, char *str_left, size_t line_len)
+{
+	char	buffer[BUFFER_SIZE];
+	char	*cursor;
+	ssize_t	bytes_read;
+	ssize_t	buffer_len;
+
+	cursor = use_str_left(buffer, str_left);
+	if (cursor > buffer && *(cursor - 1) == '\n')
+		return (str_cut(buffer, cursor, line_len));
+	bytes_read = read(fd, cursor, BUFFER_SIZE - (cursor - buffer));
+	if (bytes_read == -1)
+		return (0);
+	if (!bytes_read)
+		return (str_cut(buffer, cursor, line_len));
+	buffer_len = bytes_read + (cursor - buffer);
+	while (--bytes_read && *cursor != '\n')
 		cursor++;
-	}
-	return (0);
-}
-
-static t_reader	*next_reader(t_reader *reader, int fd)
-{
-	if (!reader)
+	if (*cursor == '\n')
 	{
-		reader = malloc(sizeof(*reader));
-		if (!reader)
-			return (0);
-		reader->cursor = reader->buffer;
-		reader->len = read(fd, reader->buffer, BUFFER_SIZE);
-		if (reader->len == -1)
-		{
-			free(reader);
-			return (0);
-		}
-		reader->next = NULL;
-		reader->nl = get_reader_nl(reader);
-		reader->is_end = reader->len < BUFFER_SIZE;
+		save_str_left(str_left, cursor + 1, bytes_read);
+		return (str_cut(buffer, cursor + 1, line_len));
 	}
-	if (reader->nl || reader->is_end)
-		return (reader);
-	reader->next = next_reader(reader->next, fd);
-	if (!reader->next)
-	{
-		free(reader);
+	cursor = read_next(fd, str_left, buffer_len + line_len);
+	if (!cursor)
 		return (0);
-	}
-	return (reader);
-}
-
-static ssize_t	get_line_len(t_reader *reader)
-{
-	if (reader->is_end)
-		return (0);
-	if (reader->nl)
-		return (reader->nl - reader->cursor + 1);
-	return (reader->len + get_line_len(reader->next));
-}
-
-static t_reader	*write_line(t_reader *reader, char *line)
-{
-	t_reader	*next;
-
-	while (reader->len && (!reader->nl || reader->cursor <= reader->nl))
-	{
-		*(line++) = *(reader->cursor++);
-		reader->len--;
-	}
-	reader->nl = get_reader_nl(reader);
-	if (reader->len)
-		return (reader);
-	if (!reader->next)
-		return (reader);
-	next = write_line(reader->next, line);
-	free(reader);
-	return (next);
-}
-
-static short	is_end(t_reader *reader)
-{
-	if (reader->len)
-		return (0);
-	if (reader->next)
-		return (is_end(reader->next));
-	return (reader->is_end);
-}
-
-static void	*free_reader(t_reader *reader)
-{
-	if (reader->next)
-		free_reader(reader->next);
-	free(reader);
-	return (0);
+	while (buffer_len--)
+		*(--cursor) = buffer[buffer_len];
+	return (cursor);
 }
 
 char	*get_next_line(int fd)
 {
-	static t_reader	*reader;
-	ssize_t			line_len;
-	char			*line;
+	static char	str_left[BUFFER_SIZE];
+	char		*line;
 
-	reader = next_reader(reader, fd);
-	if (!reader)
+	if (fd < 0 || BUFFER_SIZE < 1)
 		return (0);
-	line_len = get_line_len(reader);
-	if (!line_len && is_end(reader))
-	{
-		free_reader(reader);
-		reader = NULL;
-		return (0);
-	}
-	line = malloc(line_len + 1);
-	if (!line)
-	{
-		//clean reader
-		return (0);
-	}
-	reader = write_line(reader, line);
-	line[line_len] = '\0';
+	line = read_next(fd, str_left, 0);
 	return (line);
 }
