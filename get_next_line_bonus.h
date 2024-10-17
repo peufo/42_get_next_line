@@ -6,7 +6,7 @@
 /*   By: jvoisard <jvoisard@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/12 19:30:22 by jvoisard          #+#    #+#             */
-/*   Updated: 2024/10/17 19:23:24 by jvoisard         ###   ########.fr       */
+/*   Updated: 2024/10/17 21:01:29 by jvoisard         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,5 +25,6 @@
 
 char	*get_next_line(int fd);
 char	*get_str_left(char **strs_left, int fd);
+void	*free_str_left(char **strs_left, int fd);
 
 #endif

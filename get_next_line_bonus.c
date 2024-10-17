@@ -6,7 +6,7 @@
 /*   By: jvoisard <jvoisard@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/12 19:32:03 by jvoisard          #+#    #+#             */
-/*   Updated: 2024/10/17 20:59:18 by jvoisard         ###   ########.fr       */
+/*   Updated: 2024/10/17 21:03:13 by jvoisard         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -102,20 +102,12 @@ char	*get_next_line(int fd)
 	{
 		line = str_cut(buffer, buffer + buffer_len, 0);
 		if (!line)
-		{
-			free(strs_left[fd]);
-			strs_left[fd] = NULL;
-			return (0);
-		}
+			return (free_str_left(strs_left, fd));
 		return (line);
 	}
 	line = read_next(fd, strs_left[fd], buffer_len);
 	if (!line)
-	{
-		free(strs_left[fd]);
-		strs_left[fd] = NULL;
-		return (0);
-	}
+		return (free_str_left(strs_left, fd));
 	while (buffer_len--)
 		*(--line) = buffer[buffer_len];
 	return (line);
