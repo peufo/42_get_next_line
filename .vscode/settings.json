@@ -1,8 +1,0 @@
-{
-  "files.associations": {
-	"*.astro": "astro",
-	"get_next_line.h": "c",
-	"get_next_line_bonus.h": "c",
-	"stdlib.h": "c"
-}
-}
