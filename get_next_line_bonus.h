@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   get_next_line_bonus.h                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jvoisard <jonas.voisard@gmail.com>         +#+  +:+       +#+        */
+/*   By: jvoisard <jvoisard@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/12 19:30:22 by jvoisard          #+#    #+#             */
-/*   Updated: 2024/10/16 21:26:29 by jvoisard         ###   ########.fr       */
+/*   Updated: 2024/10/17 19:23:24 by jvoisard         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,5 +24,6 @@
 # endif
 
 char	*get_next_line(int fd);
+char	*get_str_left(char **strs_left, int fd);
 
 #endif

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   get_next_line_bonus.c                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: jvoisard <jonas.voisard@gmail.com>         +#+  +:+       +#+        */
+/*   By: jvoisard <jvoisard@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/12 19:32:03 by jvoisard          #+#    #+#             */
-/*   Updated: 2024/10/16 22:36:31 by jvoisard         ###   ########.fr       */
+/*   Updated: 2024/10/17 19:27:00 by jvoisard         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -95,13 +95,8 @@ char	*get_next_line(int fd)
 
 	if (fd < 0 || fd > LIMIT_FD || BUFFER_SIZE < 1)
 		return (0);
-	if (!strs_left[fd])
-	{
-		strs_left[fd] = malloc(BUFFER_SIZE);
-		if (!strs_left[fd])
-			return (0);
-		strs_left[fd][0] = '\0';
-	}
+	if (!get_str_left(strs_left, fd))
+		return (0);
 	buffer_len = use_str_left(buffer, strs_left[fd]);
 	if (buffer_len && buffer[buffer_len - 1] == '\n')
 		return (str_cut(buffer, buffer + buffer_len, 0));
